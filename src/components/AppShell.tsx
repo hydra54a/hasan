@@ -4,9 +4,9 @@ import { LinkIcon, MenuIcon, PrintIcon, ScreenIcon } from './Icons'
 
 export const MODULES: { id: ModuleId; label: string; shortLabel: string }[] = [
   { id: 'dashboard', label: 'Dashboard', shortLabel: 'Dashboard' },
-  { id: 'lead', label: 'Lead Generation', shortLabel: 'Lead Generation' },
-  { id: 'conversion', label: 'Conversion – Close Rate Improvement', shortLabel: 'Conversion' },
-  { id: 'discount', label: 'Discount Reduction', shortLabel: 'Discount Reduction' },
+  { id: 'lead', label: 'Lead Generation Impact', shortLabel: 'Lead Generation Impact' },
+  { id: 'conversion', label: 'Conversion Rate Impact', shortLabel: 'Conversion Rate Impact' },
+  { id: 'discount', label: 'Discount Reduction Impact', shortLabel: 'Discount Reduction Impact' },
   { id: 'marketing', label: 'Marketing Investment Optimization', shortLabel: 'Marketing Optimization' },
   { id: 'summary', label: 'Summary', shortLabel: 'Summary' },
 ]

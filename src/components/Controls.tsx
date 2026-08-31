@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import type { RiskAnswer } from '../domain/types'
 
 interface NumberFieldProps {
@@ -47,10 +48,11 @@ export function NotesField({ id, label = 'Notes', value, onChange }: { id: strin
 }
 
 export function RangeField({ id, label, value, suffix, max = 100, onChange }: { id: string; label: string; value: number; suffix: string; max?: number; onChange: (value: number) => void }) {
+  const progress = max > 0 ? Math.max(0, Math.min(100, value / max * 100)) : 0
   return (
     <label className="range-field" htmlFor={id}>
       <span><strong>{label}</strong><output>{value}{suffix}</output></span>
-      <input id={id} type="range" min="0" max={max} step="1" value={value} onChange={(event) => onChange(Number(event.target.value))} />
+      <input id={id} type="range" min="0" max={max} step="1" value={value} style={{ '--range-progress': `${progress}%` } as CSSProperties} onChange={(event) => onChange(Number(event.target.value))} />
     </label>
   )
 }
