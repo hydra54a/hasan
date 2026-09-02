@@ -63,9 +63,9 @@ export function DiscoveryImpactPage({ inputs, updateInput }: { inputs: RoiInputs
   }
 
   return <>
-    <header className="module-header"><h1>Discovery Framework <span>| Impact lift</span></h1><div><strong>{money(projection.annualExtra)}</strong><span>Projected annual revenue lift</span></div></header>
-    <div className="discovery-page"><div className="discovery-intro"><strong>Discovery Framework Impact Lift</strong><span>Build the estimate in four simple steps. Your ROI inputs stay synchronized throughout.</span></div>
-      <nav className="discovery-steps" aria-label="Discovery Framework steps">{steps.map((step, index) => <button key={step} type="button" className={activeStep === index ? 'active' : ''} onClick={() => setActiveStep(index as DiscoveryStep)}><span>{index + 1}</span>{step}</button>)}</nav>
+    <header className="module-header"><h1>Discovery Framework</h1><div><strong>{money(projection.annualExtra)}</strong></div></header>
+    <section className="dashboard-intro discovery-intro-full" aria-labelledby="discovery-guidance-title"><h3 id="discovery-guidance-title">Discovery Framework Impact Lift</h3><p>Build the estimate in four simple steps. Your ROI inputs stay synchronized throughout.</p></section>
+    <div className="discovery-page"><nav className="discovery-steps" aria-label="Discovery Framework steps">{steps.map((step, index) => <button key={step} type="button" className={activeStep === index ? 'active' : ''} onClick={() => setActiveStep(index as DiscoveryStep)}><span>{index + 1}</span>{step}</button>)}</nav>
       <div className="discovery-grid"><div>
         {activeStep === 0 ? <section className="discovery-card"><div className="discovery-section-heading"><div><h2>The Rep's Current Numbers</h2><p className="discovery-sub">Your existing ROI inputs are shown here.</p></div></div>
           <div className="discovery-field"><label htmlFor="discovery-presentations">Presentations per week</label><input id="discovery-presentations" type="number" min="0" step="0.1" value={presentations.toFixed(1)} onChange={(event) => updateInput('presentationVolume', Number(event.target.value) * 52)} /><span>from annual ROI data</span></div>

@@ -78,7 +78,7 @@ function DashboardSummary({ results, onOpen }: { results: RoiResults; onOpen: ()
 export function DashboardPage({ inputs, results, updateInput, onOpen }: { inputs: RoiInputs; results: RoiResults; updateInput: UpdateInput; onOpen: (module: ModuleId) => void }) {
   return (
     <>
-      <PageHeader title="ROI Dashboard | 2 Year Projection" value={formatCurrency(results.netTotal)} subtitle="" />
+      <PageHeader title="ROI Dashboard" value={formatCurrency(results.netTotal)} subtitle="" />
       <div className="dashboard-page">
         <section className="dashboard-intro" aria-labelledby="dashboard-guidance-title">
           <h3 id="dashboard-guidance-title">Select a section below to review your ROI</h3>
