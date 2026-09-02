@@ -86,7 +86,7 @@ export function DashboardPage({ inputs, results, updateInput, onOpen }: { inputs
         </section>
         <div className="executive-dashboard-grid">
           <OpportunityCard module="lead" title="Lead Generation Impact" projection={results.leadProjection} conservativeFactor={inputs.leadConservativeFactor} onConservativeFactor={(value) => updateInput('leadConservativeFactor', value)} onOpen={() => onOpen('lead')} />
-          <OpportunityCard module="conversion" title="Conversion Rate Impact" projection={results.conversionProjection} conservativeFactor={inputs.conversionConservativeFactor} onConservativeFactor={(value) => updateInput('conversionConservativeFactor', value)} onOpen={() => onOpen('conversion')} />
+          <OpportunityCard module="conversion" title="Conversion Rate Baseline" projection={results.conversionProjection} conservativeFactor={inputs.conversionConservativeFactor} onConservativeFactor={(value) => updateInput('conversionConservativeFactor', value)} onOpen={() => onOpen('conversion')} />
           <OpportunityCard module="discount" title="Discount Reduction Impact" projection={results.discountProjection} conservativeFactor={inputs.discountConservativeFactor} onConservativeFactor={(value) => updateInput('discountConservativeFactor', value)} onOpen={() => onOpen('discount')} />
           <DashboardSummary results={results} onOpen={() => onOpen('summary')} />
         </div>
@@ -124,7 +124,7 @@ export function LeadGenerationPage({ inputs, results, updateInput }: { inputs: R
 export function ConversionPage({ inputs, results, updateInput }: { inputs: RoiInputs; results: RoiResults; updateInput: UpdateInput }) {
   return (
     <>
-      <PageHeader title="CONVERSION RATE IMPACT" value={formatCurrency(results.conversionProjection.total)} />
+      <PageHeader title="CONVERSION RATE BASELINE" value={formatCurrency(results.conversionProjection.total)} />
       <div className="legacy-layout"><div className="legacy-form">
         <FormGroup title="SALES TEAM PERFORMANCE BASELINE">
           <NumberField id="salespeople" label="Number of salespeople" value={inputs.numberSalespeople} onChange={(value) => updateInput('numberSalespeople', value)} />
@@ -145,7 +145,7 @@ export function ConversionPage({ inputs, results, updateInput }: { inputs: RoiIn
           <NotesField id="conversion-notes" value={inputs.conversionNotes} onChange={(value) => updateInput('conversionNotes', value)} />
         </FormGroup>
         <p className="executive-equivalence">Winning an additional <strong>{formatNumber(inputs.additionalConversionWins)}</strong> deals would represent an increase in sales of <strong>{formatCurrency(results.conversionRevenue)}</strong>. This requires reducing the loss rate by only <strong>{formatPercent(results.lossRateReductionNeeded)}</strong>.</p>
-      </div><ResultRail title="Conversion Rate Impact" projection={results.conversionProjection} conservativeFactor={inputs.conversionConservativeFactor} implementationMonths={inputs.conversionImplementationMonths} onConservativeFactor={(value) => updateInput('conversionConservativeFactor', value)} onImplementationMonths={(value) => updateInput('conversionImplementationMonths', value)} /></div>
+      </div><ResultRail title="Conversion Rate Baseline" projection={results.conversionProjection} conservativeFactor={inputs.conversionConservativeFactor} implementationMonths={inputs.conversionImplementationMonths} onConservativeFactor={(value) => updateInput('conversionConservativeFactor', value)} onImplementationMonths={(value) => updateInput('conversionImplementationMonths', value)} /></div>
     </>
   )
 }
@@ -172,7 +172,7 @@ export function DiscountPage({ inputs, results, updateInput }: { inputs: RoiInpu
 
 const summaryRows = (results: RoiResults) => [
   ['LEAD GENERATION IMPACT', results.leadProjection],
-  ['CONVERSION RATE IMPACT', results.conversionProjection],
+  ['CONVERSION RATE BASELINE', results.conversionProjection],
   ['DISCOUNT REDUCTION IMPACT', results.discountProjection],
   ['MARKETING INVESTMENT OPTIMIZATION', results.marketingProjection],
 ] as const
