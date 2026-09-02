@@ -30,6 +30,7 @@ function ModuleIcon({ id }: { id: ModuleId }) {
     discount: <><path d="M20 13 11 22 2 13V3h10Z"/><circle cx="8" cy="8" r="1.5"/></>,
     marketing: <><path d="M4 14V9l13-5v15L4 14Z"/><path d="M7 15v5h4v-4M20 8v7"/></>,
     summary: <><circle cx="12" cy="12" r="9"/><path d="M12 3v9h9M8 16h8"/></>,
+    'discovery-impact': <><circle cx="12" cy="12" r="9"/><path d="m12 7 1.6 3.4L17 12l-3.4 1.6L12 17l-1.6-3.4L7 12l3.4-1.6Z"/></>,
   }
   return <svg viewBox="0 0 24 24" aria-hidden="true">{paths[id]}</svg>
 }
@@ -39,6 +40,9 @@ export function AppShell({ activeModule, presentationMode, shareStatus, children
     <div className={presentationMode ? 'app presentation' : 'app'}>
       <aside className="sidebar" aria-label="ROI sections">
         <div className="brand"><img src="/hasan-consulting-logo.png" alt="Hasan Consulting" /></div>
+        <div className="discovery-nav">
+          <button type="button" className={activeModule === 'discovery-impact' ? 'discovery-label active' : 'discovery-label'} onClick={() => onModuleChange('discovery-impact')} aria-current={activeModule === 'discovery-impact' ? 'page' : undefined}><ModuleIcon id="discovery-impact" /><span>Discovery Framework</span></button>
+        </div>
         <div className="nav-label">ROI Sections</div>
         <nav className="module-nav">
           {MODULES.map((module) => (

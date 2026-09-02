@@ -2,7 +2,7 @@ export const REALLOCATION_MONTHS = [1, 2, 4, 6, 8, 10, 12] as const
 
 export type ReallocationMonths = (typeof REALLOCATION_MONTHS)[number]
 export type RiskAnswer = 'yes' | 'no' | null
-export type ModuleId = 'dashboard' | 'lead' | 'conversion' | 'discount' | 'marketing' | 'summary'
+export type ModuleId = 'dashboard' | 'lead' | 'conversion' | 'discount' | 'marketing' | 'summary' | 'discovery-impact'
 export type MarketingStageId = 'investment' | 'reallocation' | 'impact' | 'economics' | 'analysis' | 'outcome'
 
 export interface RoiInputs {

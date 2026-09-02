@@ -8,6 +8,7 @@ import {
   SummaryPage,
 } from './components/LegacyPages'
 import { MarketingPage } from './components/MarketingPage'
+import { DiscoveryImpactPage } from './components/DiscoveryImpactPage'
 import { calculateRoi } from './domain/calculations'
 import { createShareUrl, loadInputs, saveInputs } from './domain/persistence'
 import type { ModuleId, RoiInputs } from './domain/types'
@@ -51,6 +52,7 @@ function App() {
       {activeModule === 'discount' ? <DiscountPage inputs={inputs} results={results} updateInput={updateInput} /> : null}
       {activeModule === 'marketing' ? <MarketingPage inputs={inputs} results={results} updateInput={updateInput} /> : null}
       {activeModule === 'summary' ? <SummaryPage inputs={inputs} results={results} updateInput={updateInput} /> : null}
+      {activeModule === 'discovery-impact' ? <DiscoveryImpactPage inputs={inputs} updateInput={updateInput} /> : null}
     </AppShell>
   )
 }
