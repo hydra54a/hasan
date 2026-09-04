@@ -98,8 +98,25 @@ export function DiscoveryImpactPage({ inputs, updateInput }: { inputs: RoiInputs
     const averageLift = areas.reduce((total, area) => total + area.after - area.now, 0) / areas.length
     const currentRate = closeRate / 100
     const afterRate = Math.min(0.85, currentRate * (1 + averageLift * sensitivity / 100 * conservative / 100))
-    return { averageLift, currentRate, afterRate, annualExtra: presentations * 52 * (afterRate - currentRate) * offerValue }
+    const annualPresentations = presentations * 52
+    const currentWins = annualPresentations * currentRate
+    const projectedWins = annualPresentations * afterRate
+    return {
+      averageLift,
+      currentRate,
+      afterRate,
+      annualPresentations,
+      currentWins,
+      projectedWins,
+      additionalWins: projectedWins - currentWins,
+      annualExtra: annualPresentations * (afterRate - currentRate) * offerValue,
+    }
   }, [areas, closeRate, conservative, offerValue, presentations, sensitivity])
+  const reviewAreas = useMemo(() => [...areas]
+    .sort((first, second) => (second.after - second.now) - (first.after - first.now))
+    .slice(0, 3), [areas])
+  const closeRateScale = Math.max(25, Math.ceil(projection.afterRate * 100 / 5) * 5)
+  const closeRateLift = (projection.afterRate - projection.currentRate) * 100
 
   const updateArea = (id: number, key: 'now' | 'after', value: number) => setAreas((current) => current.map((area) => {
     if (area.id !== id) return area
@@ -160,8 +177,50 @@ export function DiscoveryImpactPage({ inputs, updateInput }: { inputs: RoiInputs
           <div className="discovery-field"><label htmlFor="discovery-close">Current close rate</label><output id="discovery-close">{closeRate}%</output><span>from ROI data</span></div>
         </section> : null}
         {activeStep === 1 || activeStep === 2 ? <section className="discovery-score-stage"><div className="discovery-card discovery-score-heading-card"><div className="discovery-section-heading"><div><h2 className={activeStep === 1 ? 'rep' : 'prospect'}>{activeStep === 1 ? 'Rep Improvements' : 'Prospect Decision Conditions'}</h2><p className="discovery-sub">{activeStep === 1 ? 'Rate how the rep shows up on the call.' : 'Rate how the prospect feels and decides.'}</p></div></div></div>{areas.filter((area) => area.side === (activeStep === 1 ? 'rep' : 'prospect')).map((area) => <ScoreRow key={area.id} area={area} onChange={(key, value) => updateArea(area.id, key, value)} onRemove={() => setAreas((current) => current.filter((item) => item.id !== area.id))} />)}<button type="button" className="discovery-add" onClick={() => openCustomAreaModal(activeStep === 1 ? 'rep' : 'prospect')}>+ Add a custom area</button></section> : null}
-        {activeStep === 3 ? <section className="discovery-card discovery-review-card"><div className="discovery-section-heading"><div><h2>Review Your Impact</h2><p className="discovery-sub">Adjust the projection assumptions, then use the result to discuss the opportunity.</p></div></div><div className="discovery-review-grid"><div><strong>{(projection.afterRate * 100).toFixed(1)}%</strong><span>Projected close rate</span></div><div><strong>{money(projection.annualExtra)}</strong><span>Additional revenue per year</span></div><div><strong>{projection.averageLift.toFixed(1)}</strong><span>Average score lift</span></div></div></section> : null}
-        <div className="discovery-step-actions"><button type="button" className="discovery-secondary" disabled={activeStep === 0} onClick={() => setActiveStep((activeStep - 1) as DiscoveryStep)}>Back</button><button type="button" className="discovery-primary" disabled={activeStep === 3} onClick={() => setActiveStep((activeStep + 1) as DiscoveryStep)}>{activeStep === 2 ? 'Review impact' : 'Continue'}</button></div>
+        {activeStep === 3 ? <section className="discovery-card discovery-review-card">
+          <div className="discovery-section-heading"><div><h2>Review Your Impact</h2><p className="discovery-sub">A presentation-ready view of the modeled opportunity, improvement priorities, and assumptions.</p></div></div>
+          <div className="discovery-review-hero">
+            <div><span>Projected annual revenue lift</span><strong>{money(projection.annualExtra)}</strong><p>By improving conversion across the opportunities you already have.</p></div>
+            <div className="discovery-review-hero-stats">
+              <div><span>Close rate</span><strong>{(projection.currentRate * 100).toFixed(1)}% <i aria-hidden="true">→</i> {(projection.afterRate * 100).toFixed(1)}%</strong><small>+{closeRateLift.toFixed(1)} percentage points</small></div>
+              <div><span>Additional wins</span><strong>+{projection.additionalWins.toFixed(1)}</strong><small>per year</small></div>
+            </div>
+          </div>
+
+          <p className="discovery-executive-summary">Based on <strong>{Math.round(projection.annualPresentations).toLocaleString('en-US')} annual presentations</strong>, the Discovery Framework is projected to create approximately <strong>{projection.additionalWins.toFixed(1)} additional wins</strong>. At an average value of <strong>{money(offerValue)} per win</strong>, that represents <strong>{money(projection.annualExtra)} in additional annual revenue</strong>.</p>
+
+          <div className="discovery-review-columns">
+            <section className="discovery-review-section" aria-labelledby="close-rate-comparison-title">
+              <header><div><h3 id="close-rate-comparison-title">Close-rate comparison</h3><p>Projected conversion of the same opportunity volume.</p></div><span>Scale 0–{closeRateScale}%</span></header>
+              <div className="discovery-rate-comparison" role="img" aria-label={`Current close rate ${closeRate.toFixed(1)} percent. Projected close rate ${(projection.afterRate * 100).toFixed(1)} percent.`}>
+                <div><div className="discovery-rate-label"><span>Current</span><strong>{closeRate.toFixed(1)}%</strong></div><div className="discovery-rate-track"><span className="current" style={{ width: `${projection.currentRate * 100 / closeRateScale * 100}%` }} /></div></div>
+                <div><div className="discovery-rate-label"><span>With framework</span><strong>{(projection.afterRate * 100).toFixed(1)}%</strong></div><div className="discovery-rate-track"><span className="projected" style={{ width: `${projection.afterRate * 100 / closeRateScale * 100}%` }} /></div></div>
+              </div>
+              <div className="discovery-review-metrics">
+                <div><span>Current wins</span><strong>{projection.currentWins.toFixed(1)}</strong><small>per year</small></div>
+                <div><span>Projected wins</span><strong>{projection.projectedWins.toFixed(1)}</strong><small>per year</small></div>
+                <div><span>Average score lift</span><strong>+{projection.averageLift.toFixed(1)}</strong><small>points</small></div>
+              </div>
+            </section>
+
+            <section className="discovery-review-section" aria-labelledby="priority-areas-title">
+              <header><div><h3 id="priority-areas-title">Highest-impact areas</h3><p>Lead the discussion with the largest modeled improvements.</p></div></header>
+              <ol className="discovery-priority-list">{reviewAreas.map((area, index) => <li key={area.id}><span>{index + 1}</span><div><strong>{area.name}</strong><small>{area.side === 'rep' ? 'Sales rep impact' : 'Prospect impact'}</small></div><b>{area.now} → {area.after}<em>+{area.after - area.now}</em></b></li>)}</ol>
+            </section>
+          </div>
+
+          <section className="discovery-talking-points" aria-labelledby="talking-points-title">
+            <div><h3 id="talking-points-title">Presentation talking points</h3><p>Use these statements to explain the business case.</p></div>
+            <ul>
+              <li><strong>Improve conversion before adding volume.</strong><span>The model creates the upside from the existing {Math.round(projection.annualPresentations).toLocaleString('en-US')} annual presentations.</span></li>
+              <li><strong>Translate behavior into a measurable outcome.</strong><span>An average score lift of {projection.averageLift.toFixed(1)} points supports a {closeRateLift.toFixed(1)}-point improvement in projected close rate.</span></li>
+              <li><strong>Focus the coaching conversation.</strong><span>{reviewAreas[0]?.name ?? 'The highest-scoring opportunity'} is currently one of the strongest modeled opportunities for improvement.</span></li>
+            </ul>
+          </section>
+
+          <footer className="discovery-review-assumptions"><strong>Model assumptions</strong><span>{Math.round(projection.annualPresentations).toLocaleString('en-US')} presentations/year</span><span>{money(offerValue)} average value</span><span>{sensitivity}% impact sensitivity</span><span>{conservative}% conservative factor</span><small>Projection only. Actual results depend on execution, market conditions, and sales-cycle quality.</small></footer>
+        </section> : null}
+        <div className="discovery-step-actions"><button type="button" className="discovery-secondary" disabled={activeStep === 0} onClick={() => setActiveStep((activeStep - 1) as DiscoveryStep)}>Back</button>{activeStep < 3 ? <button type="button" className="discovery-primary" onClick={() => setActiveStep((activeStep + 1) as DiscoveryStep)}>{activeStep === 2 ? 'Review impact' : 'Continue'}</button> : null}</div>
       </div><aside className="discovery-results">
         <section className="discovery-card"><div className="discovery-section-heading"><div><h2>Live Impact</h2><p className="discovery-sub">Updates as you score each area.</p></div></div><div className="discovery-live-result"><strong>{money(projection.annualExtra)}</strong><span>Additional revenue per year</span></div><div className="discovery-live-metrics"><div><strong>{closeRate}%</strong><span>Current close rate</span></div><div><strong>{(projection.afterRate * 100).toFixed(1)}%</strong><span>After framework</span></div></div></section>
         {activeStep === 3 ? <section className="discovery-card"><div className="discovery-section-heading"><div><h2>Projection Controls</h2><p className="discovery-sub">Adjust the estimate without changing ROI inputs.</p></div></div><label className="discovery-lever">Impact sensitivity <strong>{sensitivity}%</strong><input type="range" min="5" max="40" value={sensitivity} style={rangeStyle(sensitivity, 5, 40)} onChange={(event) => setSensitivity(Number(event.target.value))} /></label><label className="discovery-lever">Conservative factor <strong>{conservative}%</strong><input type="range" min="25" max="100" step="5" value={conservative} style={rangeStyle(conservative, 25, 100)} onChange={(event) => setConservative(Number(event.target.value))} /></label></section> : null}
