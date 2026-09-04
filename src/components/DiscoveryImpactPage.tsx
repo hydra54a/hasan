@@ -1,9 +1,10 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react'
 import type { RoiInputs } from '../domain/types'
 
 type Side = 'rep' | 'prospect'
 type Area = { id: number; side: Side; name: string; quote: string; now: number; after: number; removable?: boolean }
 type DiscoveryStep = 0 | 1 | 2 | 3
+type CustomAreaDraft = { side: Side; name: string; description: string }
 
 const initialAreas: Area[] = [
   { id: 1, side: 'rep', name: 'Message & Value Confidence', quote: 'How confidently can I articulate why this conversation and solution matter?', now: 5, after: 6 },
@@ -21,15 +22,64 @@ const initialAreas: Area[] = [
 const periods = [['Week', 1], ['Month', 4], ['Quarter', 13], ['Year', 52]] as const
 const money = (value: number) => `$${Math.round(value).toLocaleString('en-US')}`
 const rangeStyle = (value: number, min: number, max: number) => ({ '--range-progress': `${(value - min) / (max - min) * 100}%` } as CSSProperties)
+const scoreOptions = Array.from({ length: 10 }, (_, index) => index + 1)
+
+function CheckIcon() {
+  return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5.2 10.2 3.1 3.1 6.6-7" /></svg>
+}
+
+function PersonIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4" /><path d="M4.5 21c0-4.2 3.1-7 7.5-7s7.5 2.8 7.5 7" /></svg>
+}
+
+function scoreSummary(area: Area, score: number, improved: boolean) {
+  if (area.id === 1) {
+    if (improved) return score >= 6 ? 'Stronger, clearer, and more compelling—your message drives understanding and action.' : 'Your message is becoming clearer and easier for the prospect to understand.'
+    return score <= 5 ? 'You have a foundation, but the message lacks clarity and impact.' : 'Your message is clear, with room to make its value more compelling.'
+  }
+
+  if (improved) {
+    if (score >= 9) return 'This becomes a consistent strength that builds trust and supports confident decisions.'
+    if (score >= 6) return 'Stronger and more intentional—this creates a clearer, more productive conversation.'
+    return 'The framework begins to create more clarity, confidence, and forward movement.'
+  }
+
+  if (score >= 9) return 'This is already a consistent strength in the conversation.'
+  if (score >= 6) return 'A solid foundation is present, with room for greater consistency and impact.'
+  return 'There is a foundation here, but greater clarity and consistency are needed.'
+}
+
+function ScoreSelector({ label, value, tone, onChange }: { label: string; value: number; tone: 'current' | 'after'; onChange: (value: number) => void }) {
+  return <section className={`discovery-score-panel ${tone}`} aria-label={`${label} rating`}>
+    <div className="discovery-score-panel-label">{label}</div>
+    <div className="discovery-score-value"><strong>{value}</strong><span>/ 10</span></div>
+    <p className="discovery-score-prompt">Select your {tone === 'current' ? 'current' : 'expected'} rating</p>
+    <div className="discovery-score-options" role="group" aria-label={`${label}: ${value} out of 10`}>
+      {scoreOptions.map((score) => <button key={score} type="button" className={score === value ? 'selected' : ''} aria-pressed={score === value} aria-label={`Set ${label.toLowerCase()} rating to ${score}`} onClick={() => onChange(score)}>{score}{score === value ? <span className="discovery-score-check"><CheckIcon /></span> : null}</button>)}
+    </div>
+  </section>
+}
 
 function ScoreRow({ area, onChange, onRemove }: { area: Area; onChange: (key: 'now' | 'after', value: number) => void; onRemove: () => void }) {
   const lift = area.after - area.now
-  return <div className="discovery-score-row">
-    <div className="discovery-score-head"><div className="discovery-score-name">{area.name}{area.removable ? <button type="button" className="discovery-remove" onClick={onRemove} aria-label={`Remove ${area.name}`}>x</button> : null}</div><div className="discovery-badges"><span>Now {area.now}</span><span>After {area.after}</span><strong>+{lift}</strong></div></div>
-    <p>{area.quote}</p>
-    <label><span>Current</span><input className="discovery-range-current" type="range" min="1" max="10" value={area.now} style={rangeStyle(area.now, 1, 10)} onChange={(event) => onChange('now', Number(event.target.value))} /></label>
-    <label><span>After framework</span><input type="range" min="1" max="10" value={area.after} style={rangeStyle(area.after, 1, 10)} onChange={(event) => onChange('after', Number(event.target.value))} /></label>
-  </div>
+  return <article className="discovery-score-row">
+    <header className="discovery-score-head">
+      <div><h3>{area.name}</h3><p>{area.quote}</p></div>
+      <div className={`discovery-impact-type ${area.side}`}><PersonIcon />{area.side === 'rep' ? 'Sales Rep Impact' : 'Prospect Impact'}</div>
+      {area.removable ? <button type="button" className="discovery-remove" onClick={onRemove} aria-label={`Remove ${area.name}`}>Remove</button> : null}
+    </header>
+    <div className="discovery-score-comparison">
+      <div className="discovery-score-side current">
+        <ScoreSelector label="Current" value={area.now} tone="current" onChange={(value) => onChange('now', value)} />
+        <p className="discovery-score-summary">{scoreSummary(area, area.now, false)}</p>
+      </div>
+      <div className="discovery-lift" aria-label={`${lift} point lift`}><div><strong>+{lift}</strong><span>Lift</span></div><p>Discovery<br />Framework</p></div>
+      <div className="discovery-score-side after">
+        <ScoreSelector label="With Discovery Framework" value={area.after} tone="after" onChange={(value) => onChange('after', value)} />
+        <p className="discovery-score-summary">{scoreSummary(area, area.after, true)}</p>
+      </div>
+    </div>
+  </article>
 }
 
 export function DiscoveryImpactPage({ inputs, updateInput }: { inputs: RoiInputs; updateInput: <K extends keyof RoiInputs>(key: K, value: RoiInputs[K]) => void }) {
@@ -40,7 +90,10 @@ export function DiscoveryImpactPage({ inputs, updateInput }: { inputs: RoiInputs
   const [conservative, setConservative] = useState(100)
   const [areas, setAreas] = useState(initialAreas)
   const [activeStep, setActiveStep] = useState<DiscoveryStep>(0)
+  const [customAreaDraft, setCustomAreaDraft] = useState<CustomAreaDraft | null>(null)
+  const [customAreaError, setCustomAreaError] = useState('')
   const steps = ['Baseline', 'Rep improvements', 'Prospect conditions', 'Review impact']
+  const isCustomAreaModalOpen = customAreaDraft !== null
   const projection = useMemo(() => {
     const averageLift = areas.reduce((total, area) => total + area.after - area.now, 0) / areas.length
     const currentRate = closeRate / 100
@@ -56,23 +109,57 @@ export function DiscoveryImpactPage({ inputs, updateInput }: { inputs: RoiInputs
     return next
   }))
 
-  const addArea = (side: Side) => {
-    const name = window.prompt(`Name this ${side}-side area:`)?.trim()
-    if (!name) return
-    setAreas((current) => [...current, { id: Date.now(), side, name, quote: 'Custom area added for this projection.', now: 5, after: 6, removable: true }])
+  useEffect(() => {
+    if (!isCustomAreaModalOpen) return
+    const previousOverflow = document.body.style.overflow
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setCustomAreaDraft(null)
+        setCustomAreaError('')
+      }
+    }
+    document.body.style.overflow = 'hidden'
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [isCustomAreaModalOpen])
+
+  const openCustomAreaModal = (side: Side) => {
+    setCustomAreaError('')
+    setCustomAreaDraft({ side, name: '', description: '' })
+  }
+
+  const closeCustomAreaModal = () => {
+    setCustomAreaDraft(null)
+    setCustomAreaError('')
+  }
+
+  const submitCustomArea = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!customAreaDraft) return
+    const name = customAreaDraft.name.trim()
+    const description = customAreaDraft.description.trim()
+    if (!name || !description) {
+      setCustomAreaError('Enter both an area name and a detailed description.')
+      return
+    }
+    setAreas((current) => [...current, { id: Date.now(), side: customAreaDraft.side, name, quote: description, now: 5, after: 6, removable: true }])
+    closeCustomAreaModal()
   }
 
   return <>
     <header className="module-header"><h1>Discovery Framework</h1><div><strong>{money(projection.annualExtra)}</strong></div></header>
     <section className="dashboard-intro discovery-intro-full" aria-labelledby="discovery-guidance-title"><h3 id="discovery-guidance-title">Discovery Framework Impact Lift</h3><p>Build the estimate in four simple steps. Your ROI inputs stay synchronized throughout.</p></section>
     <div className="discovery-page"><nav className="discovery-steps" aria-label="Discovery Framework steps">{steps.map((step, index) => <button key={step} type="button" className={activeStep === index ? 'active' : ''} onClick={() => setActiveStep(index as DiscoveryStep)}><span>{index + 1}</span>{step}</button>)}</nav>
-      <div className="discovery-grid"><div>
+      <div className={`discovery-grid ${activeStep === 1 || activeStep === 2 ? 'discovery-grid-scoring' : ''}`}><div>
         {activeStep === 0 ? <section className="discovery-card"><div className="discovery-section-heading"><div><h2>The Rep's Current Numbers</h2><p className="discovery-sub">Your existing ROI inputs are shown here.</p></div></div>
           <div className="discovery-field"><label htmlFor="discovery-presentations">Presentations per week</label><input id="discovery-presentations" type="number" min="0" step="0.1" value={presentations.toFixed(1)} onChange={(event) => updateInput('presentationVolume', Number(event.target.value) * 52)} /><span>from annual ROI data</span></div>
           <div className="discovery-field"><label htmlFor="discovery-offer">Average offer value</label><output id="discovery-offer">{money(offerValue)}</output><span>from ROI data</span></div>
           <div className="discovery-field"><label htmlFor="discovery-close">Current close rate</label><output id="discovery-close">{closeRate}%</output><span>from ROI data</span></div>
         </section> : null}
-        {activeStep === 1 || activeStep === 2 ? <section className="discovery-card"><div className="discovery-section-heading"><div><h2 className={activeStep === 1 ? 'rep' : 'prospect'}>{activeStep === 1 ? 'Rep Improvements' : 'Prospect Decision Conditions'}</h2><p className="discovery-sub">{activeStep === 1 ? 'Rate how the rep shows up on the call.' : 'Rate how the prospect feels and decides.'}</p></div></div>{areas.filter((area) => area.side === (activeStep === 1 ? 'rep' : 'prospect')).map((area) => <ScoreRow key={area.id} area={area} onChange={(key, value) => updateArea(area.id, key, value)} onRemove={() => setAreas((current) => current.filter((item) => item.id !== area.id))} />)}<button type="button" className="discovery-add" onClick={() => addArea(activeStep === 1 ? 'rep' : 'prospect')}>+ Add a custom area</button></section> : null}
+        {activeStep === 1 || activeStep === 2 ? <section className="discovery-score-stage"><div className="discovery-card discovery-score-heading-card"><div className="discovery-section-heading"><div><h2 className={activeStep === 1 ? 'rep' : 'prospect'}>{activeStep === 1 ? 'Rep Improvements' : 'Prospect Decision Conditions'}</h2><p className="discovery-sub">{activeStep === 1 ? 'Rate how the rep shows up on the call.' : 'Rate how the prospect feels and decides.'}</p></div></div></div>{areas.filter((area) => area.side === (activeStep === 1 ? 'rep' : 'prospect')).map((area) => <ScoreRow key={area.id} area={area} onChange={(key, value) => updateArea(area.id, key, value)} onRemove={() => setAreas((current) => current.filter((item) => item.id !== area.id))} />)}<button type="button" className="discovery-add" onClick={() => openCustomAreaModal(activeStep === 1 ? 'rep' : 'prospect')}>+ Add a custom area</button></section> : null}
         {activeStep === 3 ? <section className="discovery-card discovery-review-card"><div className="discovery-section-heading"><div><h2>Review Your Impact</h2><p className="discovery-sub">Adjust the projection assumptions, then use the result to discuss the opportunity.</p></div></div><div className="discovery-review-grid"><div><strong>{(projection.afterRate * 100).toFixed(1)}%</strong><span>Projected close rate</span></div><div><strong>{money(projection.annualExtra)}</strong><span>Additional revenue per year</span></div><div><strong>{projection.averageLift.toFixed(1)}</strong><span>Average score lift</span></div></div></section> : null}
         <div className="discovery-step-actions"><button type="button" className="discovery-secondary" disabled={activeStep === 0} onClick={() => setActiveStep((activeStep - 1) as DiscoveryStep)}>Back</button><button type="button" className="discovery-primary" disabled={activeStep === 3} onClick={() => setActiveStep((activeStep + 1) as DiscoveryStep)}>{activeStep === 2 ? 'Review impact' : 'Continue'}</button></div>
       </div><aside className="discovery-results">
@@ -81,5 +168,18 @@ export function DiscoveryImpactPage({ inputs, updateInput }: { inputs: RoiInputs
         <section className="discovery-card discovery-result-card"><h2>The Lift</h2><div className="discovery-result-hero"><strong>{money(projection.annualExtra)}</strong><span>Extra revenue per year</span></div><div className="discovery-rate-strip"><div><strong>{closeRate}%</strong><span>Close rate now</span></div><div><strong>{(projection.afterRate * 100).toFixed(1)}%</strong><span>After framework</span></div><div><strong>{projection.averageLift.toFixed(1)}</strong><span>Avg score lift</span></div></div><table><thead><tr><th>Period</th><th>Now</th><th>After</th><th>Extra $</th></tr></thead><tbody>{periods.map(([label, multiplier]) => { const now = presentations * multiplier * projection.currentRate * offerValue; const after = presentations * multiplier * projection.afterRate * offerValue; return <tr key={label} className={label === 'Year' ? 'total' : undefined}><td>{label}</td><td>{money(now)}</td><td>{money(after)}</td><td>{money(after - now)}</td></tr> })}</tbody></table></section>
       </aside></div>
     </div>
+    {customAreaDraft ? <div className="discovery-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) closeCustomAreaModal() }}>
+      <section className="discovery-modal" role="dialog" aria-modal="true" aria-labelledby="custom-area-title" aria-describedby="custom-area-help">
+        <header className="discovery-modal-header"><div><h2 id="custom-area-title">Add a custom {customAreaDraft.side === 'rep' ? 'sales rep' : 'prospect'} area</h2><p id="custom-area-help">Define another factor to score in the Discovery Framework. New areas begin at a Current rating of 5 and an Expected rating of 6, and are included in the live impact calculation.</p></div><button type="button" className="discovery-modal-close" onClick={closeCustomAreaModal} aria-label="Close custom area dialog"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" /></svg></button></header>
+        <form onSubmit={submitCustomArea} noValidate>
+          <div className="discovery-modal-body">
+            <label className="discovery-modal-field" htmlFor="custom-area-name"><span>Area name</span><input id="custom-area-name" autoFocus maxLength={80} value={customAreaDraft.name} aria-invalid={Boolean(customAreaError && !customAreaDraft.name.trim())} placeholder={customAreaDraft.side === 'rep' ? 'e.g. Objection handling confidence' : 'e.g. Confidence in the next step'} onChange={(event) => { setCustomAreaDraft((current) => current ? { ...current, name: event.target.value } : current); setCustomAreaError('') }} /><small>Use a short, specific title that is easy to recognize.</small></label>
+            <label className="discovery-modal-field" htmlFor="custom-area-description"><span>Detailed description</span><textarea id="custom-area-description" rows={4} maxLength={240} value={customAreaDraft.description} aria-invalid={Boolean(customAreaError && !customAreaDraft.description.trim())} placeholder="Describe what this area measures and why it matters in the conversation." onChange={(event) => { setCustomAreaDraft((current) => current ? { ...current, description: event.target.value } : current); setCustomAreaError('') }} /><small>This description appears beneath the area title. {customAreaDraft.description.length}/240</small></label>
+            {customAreaError ? <p className="discovery-modal-error">{customAreaError}</p> : null}
+          </div>
+          <footer className="discovery-modal-actions"><button type="button" className="discovery-modal-cancel" onClick={closeCustomAreaModal}>Cancel</button><button type="submit" className="discovery-modal-submit">Add area</button></footer>
+        </form>
+      </section>
+    </div> : null}
   </>
 }
