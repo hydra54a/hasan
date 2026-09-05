@@ -52,7 +52,7 @@ function App() {
       {activeModule === 'discount' ? <DiscountPage inputs={inputs} results={results} updateInput={updateInput} /> : null}
       {activeModule === 'marketing' ? <MarketingPage inputs={inputs} results={results} updateInput={updateInput} /> : null}
       {activeModule === 'summary' ? <SummaryPage inputs={inputs} results={results} updateInput={updateInput} /> : null}
-      {activeModule === 'discovery-impact' ? <DiscoveryImpactPage inputs={inputs} updateInput={updateInput} /> : null}
+      {activeModule === 'discovery-impact' ? <DiscoveryImpactPage /> : null}
     </AppShell>
   )
 }
