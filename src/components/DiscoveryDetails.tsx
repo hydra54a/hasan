@@ -1,4 +1,4 @@
-import { baselineErrors, summarizeDiscoveryAreas, type DiscoveryArea, type DiscoveryBaseline } from '../domain/discovery'
+import { discoveryRatingLift, baselineErrors, summarizeDiscoveryAreas, type DiscoveryArea, type DiscoveryBaseline } from '../domain/discovery'
 
 export function DiscoveryBaselineForm({ baseline, onChange, showErrors }: { baseline: DiscoveryBaseline; onChange: (value: DiscoveryBaseline) => void; showErrors: boolean }) {
   const errors = baselineErrors(baseline)
@@ -26,7 +26,7 @@ export function DiscoveryBaselineForm({ baseline, onChange, showErrors }: { base
 }
 
 export function DecisionConditions({ areas }: { areas: DiscoveryArea[] }) {
-  return <div className="discovery-conditions"><table><caption>Decision Conditions</caption><thead><tr><th scope="col">Area</th><th scope="col">Now</th><th scope="col">After</th><th scope="col">Lift</th></tr></thead><tbody>{areas.map((area) => <tr key={area.id}><th scope="row">{area.name}</th><td>{area.now}</td><td>{area.after}</td><td>+{area.after - area.now}</td></tr>)}</tbody></table></div>
+  return <div className="discovery-conditions"><table><caption>Decision Conditions</caption><thead><tr><th scope="col">Area</th><th scope="col">Now</th><th scope="col">After</th><th scope="col">Lift</th></tr></thead><tbody>{areas.map((area) => <tr key={area.id}><th scope="row">{area.name}</th><td>{area.now}</td><td>{area.after}</td><td>+{discoveryRatingLift(area.now, area.after)}</td></tr>)}</tbody></table></div>
 }
 
 export function ImprovementSummary({ areas, side, compact = false }: { areas: DiscoveryArea[]; side: 'rep' | 'prospect'; compact?: boolean }) {
@@ -36,9 +36,9 @@ export function ImprovementSummary({ areas, side, compact = false }: { areas: Di
     <div className="discovery-improvement-values">
       <div><span>Current Average Score</span><strong>{summary.current.toFixed(1)}<small>/10</small></strong><div className="discovery-summary-meter" aria-hidden="true"><i style={{ width: `${summary.current * 10}%` }} /></div></div>
       <div><span>With Discovery Framework</span><strong>{summary.after.toFixed(1)}<small>/10</small></strong><div className="discovery-summary-meter" aria-hidden="true"><i style={{ width: `${summary.after * 10}%` }} /></div></div>
-      <div><span>{side === 'rep' ? 'Average Lift' : 'Average Prospect Lift'}</span><strong>+{summary.lift.toFixed(1)}</strong><small>{summary.improvement.toFixed(0)}% improvement in average {side === 'rep' ? 'sales rep' : 'prospect'} score.</small></div>
+      <div><span>{side === 'rep' ? 'Average Lift' : 'Average Prospect Lift'}</span><strong>+{summary.lift.toFixed(1)}</strong><small>{summary.improvement.toFixed(0)}% weighted improvement relative to the current average {side === 'rep' ? 'sales rep' : 'prospect'} score.</small></div>
     </div>
-    <details><summary>View details</summary><div className="discovery-summary-detail-list">{areas.map((area) => <div key={area.id}><span>{area.name}</span><strong>{area.now} to {area.after} <small>+{area.after - area.now}</small></strong></div>)}</div></details>
+    <details><summary>View details</summary><div className="discovery-summary-detail-list">{areas.map((area) => <div key={area.id}><span>{area.name}</span><strong>{area.now} to {area.after} <small>+{discoveryRatingLift(area.now, area.after)}</small></strong></div>)}</div></details>
     {!compact ? <p className="discovery-summary-takeaway">{side === 'rep' ? 'A more confident, aligned, and in-control conversation creates the conditions for more opportunities and greater results.' : 'More aligned, open, and clear conversations create better conditions for a confident buying decision.'}</p> : null}
   </section>
 }

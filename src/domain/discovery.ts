@@ -58,11 +58,16 @@ export function loadDiscoveryBaseline(): DiscoveryBaseline {
   } catch { return { ...EMPTY_DISCOVERY_BASELINE } }
 }
 
+// Each rating point contributes 1.5 weighted lift points.
+export function discoveryRatingLift(current: number, after: number): number {
+  return (after - current) * 1.5
+}
+
 export function summarizeDiscoveryAreas(areas: DiscoveryArea[]) {
   const count = areas.length
   const current = count ? areas.reduce((sum, area) => sum + area.now, 0) / count : 0
   const after = count ? areas.reduce((sum, area) => sum + area.after, 0) / count : 0
-  const lift = after - current
+  const lift = discoveryRatingLift(current, after)
   return { count, current, after, lift, improvement: current > 0 ? lift / current * 100 : 0 }
 }
 

@@ -1,7 +1,7 @@
 import { calculateRoi } from './calculations'
 import { DEFAULT_INPUTS } from './persistence'
 import { describe, expect, it } from 'vitest'
-import { baselineErrors, discoveryOpportunityLoss, normalizeSalesCycle, calculateDiscovery, calculateDiscoveryFromConversion, EMPTY_DISCOVERY_BASELINE, summarizeDiscoveryAreas, type DiscoveryArea } from './discovery'
+import { discoveryRatingLift, baselineErrors, discoveryOpportunityLoss, normalizeSalesCycle, calculateDiscovery, calculateDiscoveryFromConversion, EMPTY_DISCOVERY_BASELINE, summarizeDiscoveryAreas, type DiscoveryArea } from './discovery'
 
 const baseline = { ...EMPTY_DISCOVERY_BASELINE, weeklyPresentations: '10', offerValue: '5000', closeRate: '20' }
 const areas: DiscoveryArea[] = [
@@ -29,8 +29,8 @@ describe('Discovery Framework independent baseline', () => {
     const team = calculateDiscovery({ ...baseline, mode: 'team', reps: '5' }, areas, 20, 100)
     expect(individual.annualPresentations).toBe(520)
     expect(individual.currentWins).toBe(104)
-    expect(individual.afterRate).toBeCloseTo(.26)
-    expect(individual.annualExtra).toBeCloseTo(156000)
+    expect(individual.afterRate).toBeCloseTo(.29)
+    expect(individual.annualExtra).toBeCloseTo(234000)
     expect(team.annualPresentations).toBe(2600)
     expect(team.afterRate).toBe(individual.afterRate)
     expect(team.additionalWins).toBeCloseTo(individual.additionalWins * 5)
@@ -39,8 +39,8 @@ describe('Discovery Framework independent baseline', () => {
   })
 
   it('summarizes each side independently, including custom areas', () => {
-    expect(summarizeDiscoveryAreas(areas.filter((area) => area.side === 'rep'))).toEqual({ count: 1, current: 4, after: 6, lift: 2, improvement: 50 })
-    expect(summarizeDiscoveryAreas([...areas, { ...areas[0], id: 3, now: 3, after: 8 }]).lift).toBeCloseTo(8 / 3)
+    expect(summarizeDiscoveryAreas(areas.filter((area) => area.side === 'rep'))).toEqual({ count: 1, current: 4, after: 6, lift: 3, improvement: 75 })
+    expect(summarizeDiscoveryAreas([...areas, { ...areas[0], id: 3, now: 3, after: 8 }]).lift).toBeCloseTo(4)
     expect(summarizeDiscoveryAreas([]).lift).toBe(0)
   })
 
@@ -66,7 +66,7 @@ describe('Discovery shared conversion baseline', () => {
     expect(projection.annualPresentations).toBe(results.opportunitiesWorked)
     expect(projection.currentWins).toBeCloseTo(results.dealsNeeded)
     expect(projection.currentWins * inputs.averageDealValue).toBeCloseTo(results.expectedAnnualSales)
-    expect(projection.annualExtra).toBeCloseTo(results.expectedAnnualSales * .3)
+    expect(projection.annualExtra).toBeCloseTo(results.expectedAnnualSales * .45)
     const empty = { ...inputs, numberSalespeople: 0 }
     expect(calculateDiscoveryFromConversion(empty, calculateRoi(empty), areas, 20, 100).annualExtra).toBe(0)
   })
@@ -115,5 +115,20 @@ describe('Opportunity loss calculation inputs', () => {
     const input = { ...baseline, weeklyPresentations: '1', offerValue: '99.99', closeRate: '33.3' }
     expect(discoveryOpportunityLoss(input)).toBeCloseTo(3468.05316, 5)
     expect(discoveryOpportunityLoss({ ...input, reps: '100' })).toBe(discoveryOpportunityLoss(input))
+  })
+})
+
+
+describe('Discovery weighted rating lift', () => {
+  it('weights each point once while preserving entered scores', () => {
+    expect(discoveryRatingLift(5, 6)).toBe(1.5)
+    expect(discoveryRatingLift(5, 7)).toBe(3)
+    expect(discoveryRatingLift(5, 5)).toBe(0)
+    const ratedAreas = areas.map(area => ({ ...area, now: 5, after: 6 }))
+    expect(summarizeDiscoveryAreas(ratedAreas)).toEqual({ count: 2, current: 5, after: 6, lift: 1.5, improvement: 30 })
+    const projection = calculateDiscovery(baseline, ratedAreas, 20, 100)
+    expect(projection.averageLift).toBe(1.5)
+    expect(projection.afterRate).toBeCloseTo(.26)
+    expect(projection.annualExtra).toBeCloseTo(156000)
   })
 })

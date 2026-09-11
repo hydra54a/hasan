@@ -1,6 +1,6 @@
 import { DiscoveryBaselineFields } from './DiscoveryBaselineFields'
 import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react'
-import { calculateDiscovery, loadDiscoveryBaseline, DISCOVERY_BASELINE_KEY, type DiscoveryArea as Area, type DiscoverySide as Side } from '../domain/discovery'
+import { discoveryRatingLift, calculateDiscovery, loadDiscoveryBaseline, DISCOVERY_BASELINE_KEY, type DiscoveryArea as Area, type DiscoverySide as Side } from '../domain/discovery'
 import { ImprovementSummary } from './DiscoveryDetails'
 import './discovery.css'
 
@@ -72,7 +72,7 @@ function ScoreSelector({ label, value, tone, onChange }: { label: string; value:
 }
 
 function ScoreRow({ area, onChange, onRemove }: { area: Area; onChange: (key: 'now' | 'after', value: number) => void; onRemove: () => void }) {
-  const lift = area.after - area.now
+  const lift = discoveryRatingLift(area.now, area.after)
   return <article className="discovery-score-row">
     <header className="discovery-score-head">
       <div><h3 tabIndex={-1}>{area.name}</h3><p>{area.quote}</p></div>
@@ -84,7 +84,7 @@ function ScoreRow({ area, onChange, onRemove }: { area: Area; onChange: (key: 'n
         <ScoreSelector label="Current" value={area.now} tone="current" onChange={(value) => onChange('now', value)} />
         <p className="discovery-score-summary">{scoreSummary(area, area.now, false)}</p>
       </div>
-      <div className="discovery-lift" aria-label={`${lift} point lift`}><div><strong>+{lift}</strong><span>Lift</span></div><p>Discovery<br />Framework</p></div>
+      <div className="discovery-lift" aria-label={`${lift} weighted point lift`}><div><strong>+{lift}</strong><span>Lift</span></div><p>Discovery<br />Framework</p></div>
       <div className="discovery-score-side after">
         <ScoreSelector label="With Discovery Framework" value={area.after} tone="after" onChange={(value) => onChange('after', value)} />
         <p className="discovery-score-summary">{scoreSummary(area, area.after, true)}</p>
@@ -119,7 +119,7 @@ export function DiscoveryImpactPage() {
   const currentQuestion = scoringAreas[questionIndex]
   const isScoring = activeStep === 1 || activeStep === 2
   const reviewAreas = useMemo(() => [...areas]
-    .sort((first, second) => (second.after - second.now) - (first.after - first.now))
+    .sort((first, second) => discoveryRatingLift(second.now, second.after) - discoveryRatingLift(first.now, first.after))
     .slice(0, 3), [areas])
   const closeRateScale = Math.max(25, Math.ceil(Math.max(projection.currentRate, projection.afterRate) * 100 / 5) * 5)
   const closeRateLift = (projection.afterRate - projection.currentRate) * 100
@@ -229,13 +229,13 @@ export function DiscoveryImpactPage() {
               <div className="discovery-review-metrics">
                 <div><span>Current wins</span><strong>{projection.currentWins.toFixed(1)}</strong><small>per year</small></div>
                 <div><span>Projected wins</span><strong>{projection.projectedWins.toFixed(1)}</strong><small>per year</small></div>
-                <div><span>Average score lift</span><strong>+{projection.averageLift.toFixed(1)}</strong><small>points</small></div>
+                <div><span>Average score lift</span><strong>+{projection.averageLift.toFixed(1)}</strong><small>weighted points</small></div>
               </div>
             </section>
 
             <section className="discovery-review-section" aria-labelledby="priority-areas-title">
               <header><div><h3 id="priority-areas-title">Highest-impact areas</h3><p>Lead the discussion with the largest modeled improvements.</p></div></header>
-              <ol className="discovery-priority-list">{reviewAreas.map((area, index) => <li key={area.id}><span>{index + 1}</span><div><strong>{area.name}</strong><small>{area.side === 'rep' ? 'Sales rep impact' : 'Prospect impact'}</small></div><b>{area.now} → {area.after}<em>+{area.after - area.now}</em></b></li>)}</ol>
+              <ol className="discovery-priority-list">{reviewAreas.map((area, index) => <li key={area.id}><span>{index + 1}</span><div><strong>{area.name}</strong><small>{area.side === 'rep' ? 'Sales rep impact' : 'Prospect impact'}</small></div><b>{area.now} → {area.after}<em>+{discoveryRatingLift(area.now, area.after)}</em></b></li>)}</ol>
             </section>
           </div>
 
