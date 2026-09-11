@@ -121,10 +121,10 @@ export function LeadGenerationPage({ inputs, results, updateInput }: { inputs: R
   )
 }
 
-export function ConversionPage({ inputs, results, updateInput }: { inputs: RoiInputs; results: RoiResults; updateInput: UpdateInput }) {
+export function ConversionPage({ inputs, results, updateInput, embedded = false }: { inputs: RoiInputs; results: RoiResults; updateInput: UpdateInput; embedded?: boolean }) {
   return (
     <>
-      <PageHeader title="CONVERSION RATE BASELINE" value={formatCurrency(results.conversionProjection.total)} />
+      {!embedded ? <PageHeader title="CONVERSION RATE BASELINE" value={formatCurrency(results.conversionProjection.total)} /> : null}
       <div className="legacy-layout"><div className="legacy-form">
         <FormGroup title="SALES TEAM PERFORMANCE BASELINE">
           <NumberField id="salespeople" label="Number of salespeople" value={inputs.numberSalespeople} onChange={(value) => updateInput('numberSalespeople', value)} />
@@ -145,7 +145,7 @@ export function ConversionPage({ inputs, results, updateInput }: { inputs: RoiIn
           <NotesField id="conversion-notes" value={inputs.conversionNotes} onChange={(value) => updateInput('conversionNotes', value)} />
         </FormGroup>
         <p className="executive-equivalence">Winning an additional <strong>{formatNumber(inputs.additionalConversionWins)}</strong> deals would represent an increase in sales of <strong>{formatCurrency(results.conversionRevenue)}</strong>. This requires reducing the loss rate by only <strong>{formatPercent(results.lossRateReductionNeeded)}</strong>.</p>
-      </div><ResultRail title="Conversion Rate Baseline" projection={results.conversionProjection} conservativeFactor={inputs.conversionConservativeFactor} implementationMonths={inputs.conversionImplementationMonths} onConservativeFactor={(value) => updateInput('conversionConservativeFactor', value)} onImplementationMonths={(value) => updateInput('conversionImplementationMonths', value)} /></div>
+      </div>{!embedded ? <ResultRail title="Conversion Rate Baseline" projection={results.conversionProjection} conservativeFactor={inputs.conversionConservativeFactor} implementationMonths={inputs.conversionImplementationMonths} onConservativeFactor={(value) => updateInput('conversionConservativeFactor', value)} onImplementationMonths={(value) => updateInput('conversionImplementationMonths', value)} /> : null}</div>
     </>
   )
 }

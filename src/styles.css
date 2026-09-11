@@ -132,10 +132,8 @@ main { min-width:0; padding-bottom:60px; }
 .discovery-steps { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); margin-bottom:22px; border:1px solid var(--border); background:#fff; box-shadow:var(--shadow); }
 .discovery-steps button { display:flex; align-items:center; justify-content:center; gap:8px; min-height:54px; padding:8px 10px; border:0; border-right:1px solid var(--border); background:#fff; color:#5d6a76; font-size:12px; font-weight:600; cursor:pointer; }
 .discovery-steps button:last-child { border-right:0; }
-.discovery-steps button span { display:grid; place-items:center; flex:0 0 25px; height:25px; border:1px solid #b7c3cd; border-radius:50%; font-size:11px; }
 .discovery-steps button:hover { background:#f7fafc; color:var(--blue); }
 .discovery-steps button.active { background:#f4f9fc; color:#337ab7; }
-.discovery-steps button.active span { border-color:var(--blue); background:var(--blue); color:#fff; }
 .discovery-card { margin-bottom:22px; padding:26px 28px; }
 .discovery-results .discovery-card { min-width:0; }
 .discovery-score-stage { margin-bottom:22px; padding:26px 28px; border:1px solid var(--border); background:#fff; box-shadow:var(--shadow); }
@@ -162,25 +160,25 @@ main { min-width:0; padding-bottom:60px; }
 .discovery-impact-type.prospect { border-color:#cae1e8; background:#f2f8fa; }
 .discovery-impact-type.prospect svg { fill:#078da8; }
 .discovery-score-comparison { display:grid; grid-template-columns:minmax(0,1fr) 90px minmax(0,1fr); align-items:stretch; gap:12px; }
-.discovery-score-side { display:flex; min-width:0; flex-direction:column; padding:20px 18px 18px; border:1px solid #bfd9e5; border-radius:11px; background:linear-gradient(145deg,#fff 55%,#f4fafc); }
+.discovery-score-side { display:flex; min-width:0; flex-direction:column; padding:20px 18px 18px; border:1px solid #cdcdd4; border-radius:11px; background:linear-gradient(145deg,#fff 55%,#cdcdd4); }
 .discovery-score-side.after { border-color:#b9ddc4; background:linear-gradient(145deg,#fff 55%,#f3faf5); }
-.discovery-score-panel-label { color:#078da8; font-size:13px; font-weight:700; letter-spacing:.025em; text-transform:uppercase; }
+.discovery-score-panel-label { color:#676a6c; font-size:13px; font-weight:700; letter-spacing:.025em; text-transform:uppercase; }
 .discovery-score-panel.after .discovery-score-panel-label { color:#078633; }
 .discovery-score-value { display:flex; align-items:baseline; gap:7px; margin:4px 0 2px; color:#3d4c64; line-height:1; }
-.discovery-score-value strong { color:#078da8; font-size:clamp(44px,5vw,62px); font-weight:700; letter-spacing:-.04em; }
+.discovery-score-value strong { color:#676a6c; font-size:clamp(44px,5vw,62px); font-weight:700; letter-spacing:-.04em; }
 .discovery-score-panel.after .discovery-score-value strong { color:#078633; }
 .discovery-score-value span { font-size:clamp(22px,2.5vw,30px); font-weight:600; }
 .discovery-score-panel .discovery-score-prompt { margin:4px 0 14px; color:#52637a; font-size:13px; line-height:1.35; }
 .discovery-score-options { display:grid; grid-template-columns:repeat(10,minmax(0,1fr)); gap:4px; }
 .discovery-score-options button { position:relative; display:grid; place-items:center; min-width:0; height:39px; padding:0; border:1px solid #d5dde4; border-radius:5px; background:#fff; color:#07142e; font-size:13px; cursor:pointer; transition:transform .14s ease,border-color .14s ease,background .14s ease,color .14s ease,box-shadow .14s ease; }
-.discovery-score-options button:hover { z-index:1; border-color:#078da8; transform:translateY(-1px); }
+.discovery-score-options button:hover { z-index:1; border-color:#cdcdd4; transform:translateY(-1px); }
 .discovery-score-panel.after .discovery-score-options button:hover { border-color:#078633; }
-.discovery-score-options button.selected { border-color:#078da8; background:#078da8; color:#fff; font-weight:700; box-shadow:0 0 0 2px #fff,0 0 0 4px #078da8; }
+.discovery-score-options button.selected { border-color:#cdcdd4; background:#cdcdd4; color:#fff; font-weight:700; box-shadow:0 0 0 2px #fff,0 0 0 4px #cdcdd4; }
 .discovery-score-panel.after .discovery-score-options button.selected { border-color:#078633; background:#078633; box-shadow:0 0 0 2px #fff,0 0 0 4px #078633; }
-.discovery-score-check { position:absolute; top:-10px; right:-8px; display:grid; place-items:center; width:20px; height:20px; border:2px solid #fff; border-radius:50%; background:#078da8; color:#fff; box-shadow:0 1px 3px rgba(7,20,46,.18); }
+.discovery-score-check { position:absolute; top:-10px; right:-8px; display:grid; place-items:center; width:20px; height:20px; border:2px solid #fff; border-radius:50%; background:#cdcdd4; color:#fff; box-shadow:0 1px 3px rgba(7,20,46,.18); }
 .discovery-score-panel.after .discovery-score-check { background:#078633; }
 .discovery-score-check svg { width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; }
-.discovery-score-summary { flex:1; margin:18px 0 0; padding:16px 2px 0; border-top:1px solid #cfe1e9; color:#07142e; font-size:14px; line-height:1.5; }
+.discovery-score-summary { flex:1; margin:18px 0 0; padding:16px 2px 0; border-top:1px solid #cdcdd4; color:#07142e; font-size:14px; line-height:1.5; }
 .discovery-score-side.after .discovery-score-summary { border-color:#cde3d3; }
 .discovery-lift { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#07142e; text-align:center; }
 .discovery-lift::before { position:absolute; top:43%; left:-14px; right:-14px; height:2px; background:linear-gradient(90deg,#078da8 0 50%,#078633 50% 100%); content:''; }

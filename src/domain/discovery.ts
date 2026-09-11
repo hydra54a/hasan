@@ -1,3 +1,5 @@
+import type { RoiInputs, RoiResults } from './types'
+
 export type DiscoverySide = 'rep' | 'prospect'
 export type DiscoveryArea = { id: number; side: DiscoverySide; name: string; quote: string; now: number; after: number; removable?: boolean }
 export type DiscoveryBaseline = {
@@ -50,7 +52,9 @@ export function loadDiscoveryBaseline(): DiscoveryBaseline {
     }
     if (next.mode !== 'team' && next.mode !== 'individual') next.mode = 'individual'
     if (!['days', 'weeks', 'months'].includes(next.salesCycleUnit)) next.salesCycleUnit = 'days'
-    return next
+    next.closeRate = next.closeRate === '' ? '' : String(Math.min(100, Math.max(0, Number(next.closeRate) || 0)))
+    next.noDecisionRate = next.closeRate === '' ? '' : String(100 - Number(next.closeRate))
+    return normalizeSalesCycle(next)
   } catch { return { ...EMPTY_DISCOVERY_BASELINE } }
 }
 
@@ -67,11 +71,40 @@ export function calculateDiscovery(baseline: DiscoveryBaseline, areas: Discovery
   const repCount = baseline.mode === 'team' ? Number(baseline.reps) : 1
   const annualPresentations = ready ? Number(baseline.weeklyPresentations) * repCount * 52 : 0
   const currentRate = ready ? Number(baseline.closeRate) / 100 : 0
+  return projectDiscovery(ready, repCount, annualPresentations, currentRate, ready ? Number(baseline.offerValue) : 0, areas, sensitivity, conservative)
+}
+
+export function calculateDiscoveryFromConversion(inputs: RoiInputs, results: RoiResults, areas: DiscoveryArea[], sensitivity: number, conservative: number) {
+  const nonnegative = (value: number) => Number.isFinite(value) ? Math.max(0, value) : 0
+  return projectDiscovery(true, nonnegative(inputs.numberSalespeople), nonnegative(results.opportunitiesWorked), Math.min(100, nonnegative(inputs.currentCloseRate)) / 100, nonnegative(inputs.averageDealValue), areas, sensitivity, conservative)
+}
+
+function projectDiscovery(ready: boolean, repCount: number, annualPresentations: number, currentRate: number, offerValue: number, areas: DiscoveryArea[], sensitivity: number, conservative: number) {
   const averageLift = summarizeDiscoveryAreas(areas).lift
   // Keep the existing 85% projection ceiling without reducing a higher entered baseline.
   const afterRate = Math.max(currentRate, Math.min(.85, currentRate * (1 + averageLift * sensitivity / 100 * conservative / 100)))
   const currentWins = annualPresentations * currentRate
   const projectedWins = annualPresentations * afterRate
   const additionalWins = projectedWins - currentWins
-  return { ready, repCount, annualPresentations, currentRate, afterRate, averageLift, currentWins, projectedWins, additionalWins, annualExtra: additionalWins * (ready ? Number(baseline.offerValue) : 0) }
+  return { ready, repCount, annualPresentations, currentRate, afterRate, averageLift, currentWins, projectedWins, additionalWins, annualExtra: additionalWins * offerValue }
+}
+
+export function normalizeSalesCycle(baseline: DiscoveryBaseline): DiscoveryBaseline {
+  if (baseline.salesCycleUnit === 'days' && Number(baseline.salesCycle) > 59 && !baselineErrors(baseline).salesCycle) {
+    return { ...baseline, salesCycle: String(Number((Number(baseline.salesCycle) / 30).toFixed(4))), salesCycleUnit: 'months' }
+  }
+  return baseline
+}
+
+/** Annual revenue gap against converting every existing presentation (52 weeks). */
+export function discoveryOpportunityLoss(baseline: DiscoveryBaseline): number | null {
+  const errors = baselineErrors(baseline)
+  // Only inputs used by this calculation can prevent a result.
+  if (errors.weeklyPresentations || errors.offerValue || errors.closeRate || errors.reps) return null
+
+  const repCount = baseline.mode === 'team' ? Number(baseline.reps) : 1
+  const annualPresentations = Number(baseline.weeklyPresentations) * 52 * repCount
+  const potentialRevenue = annualPresentations * Number(baseline.offerValue)
+  const currentRevenue = potentialRevenue * Number(baseline.closeRate) / 100
+  return Math.max(0, potentialRevenue - currentRevenue)
 }

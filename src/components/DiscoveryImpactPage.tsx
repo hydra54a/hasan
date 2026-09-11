@@ -1,6 +1,7 @@
+import { DiscoveryBaselineFields } from './DiscoveryBaselineFields'
 import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react'
-import { baselineErrors, calculateDiscovery, DISCOVERY_BASELINE_KEY, loadDiscoveryBaseline, type DiscoveryArea as Area, type DiscoverySide as Side } from '../domain/discovery'
-import { DecisionConditions, DiscoveryBaselineForm, ImprovementSummary, ProspectMeaning } from './DiscoveryDetails'
+import { calculateDiscovery, loadDiscoveryBaseline, DISCOVERY_BASELINE_KEY, type DiscoveryArea as Area, type DiscoverySide as Side } from '../domain/discovery'
+import { ImprovementSummary } from './DiscoveryDetails'
 import './discovery.css'
 
 type DiscoveryStep = 0 | 1 | 2 | 3
@@ -26,6 +27,16 @@ const scoreOptions = Array.from({ length: 10 }, (_, index) => index + 1)
 
 function CheckIcon() {
   return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5.2 10.2 3.1 3.1 6.6-7" /></svg>
+}
+
+function StepIcon({ step }: { step: number }) {
+  const paths = [
+    <path d="M4 20V10h4v10M10 20V4h4v16M16 20v-7h4v7" />,
+    <><path d="M4 17l6-6 4 3 6-9M15 5h5v5" /></>,
+    <><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></>,
+    <><path d="M14 3H5v18h14V8l-5-5ZM14 3v5h5M8 14l3 3 5-6" /></>,
+  ]
+  return <svg className="discovery-step-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">{paths[step]}</svg>
 }
 
 function PersonIcon() {
@@ -84,9 +95,11 @@ function ScoreRow({ area, onChange, onRemove }: { area: Area; onChange: (key: 'n
 
 export function DiscoveryImpactPage() {
   const [baseline, setBaseline] = useState(loadDiscoveryBaseline)
-  const [showBaselineErrors, setShowBaselineErrors] = useState(false)
-  const offerValue = Number(baseline.offerValue)
-  const closeRate = Number(baseline.closeRate)
+  useEffect(() => {
+    try { localStorage.setItem(DISCOVERY_BASELINE_KEY, JSON.stringify(baseline)) } catch { /* Keep the assessment usable when storage is unavailable. */ }
+  }, [baseline])
+  const offerValue = Number(baseline.offerValue) || 0
+  const closeRate = Number(baseline.closeRate) || 0
   const [sensitivity, setSensitivity] = useState(20)
   const [conservative, setConservative] = useState(100)
   const [areas, setAreas] = useState(initialAreas)
@@ -111,19 +124,14 @@ export function DiscoveryImpactPage() {
   const closeRateScale = Math.max(25, Math.ceil(Math.max(projection.currentRate, projection.afterRate) * 100 / 5) * 5)
   const closeRateLift = (projection.afterRate - projection.currentRate) * 100
 
-  useEffect(() => {
-    try { localStorage.setItem(DISCOVERY_BASELINE_KEY, JSON.stringify(baseline)) } catch { /* Assessment remains usable when storage is unavailable. */ }
-  }, [baseline])
-
   const goToStep = (step: DiscoveryStep) => {
-    if (step > 0 && Object.keys(baselineErrors(baseline)).length > 0) {
-      setShowBaselineErrors(true)
+    if (step > 0 && !projection.ready) {
       setActiveStep(0)
-      requestAnimationFrame(() => document.querySelector<HTMLInputElement>('.discovery-baseline-card [aria-invalid="true"]')?.focus())
+      requestAnimationFrame(() => document.querySelector<HTMLInputElement>('.discovery-baseline-card [aria-invalid=true]')?.focus())
       return
     }
     setActiveStep(step)
-    requestAnimationFrame(() => document.querySelector('.discovery-steps')?.scrollIntoView({ block: 'start' }))
+    requestAnimationFrame(() => document.querySelector('.discovery-page')?.scrollTo({ top: 0, behavior: 'instant' }))
   }
 
   const updateArea = (id: number, key: 'now' | 'after', value: number) => setAreas((current) => current.map((area) => {
@@ -136,7 +144,7 @@ export function DiscoveryImpactPage() {
 
   const focusQuestion = () => requestAnimationFrame(() => {
     document.querySelector<HTMLHeadingElement>('.discovery-question-stage .discovery-score-head h3')?.focus({ preventScroll: true })
-    document.querySelector('.discovery-question-stage')?.scrollIntoView({ block: 'start', behavior: 'instant' })
+    document.querySelector('.discovery-page')?.scrollTo({ top: 0, behavior: 'instant' })
   })
 
   const selectQuestion = (id: number) => {
@@ -189,11 +197,11 @@ export function DiscoveryImpactPage() {
   }
 
   return <>
-    <header className="module-header"><h1>Discovery Framework</h1>{activeStep > 0 ? <div><strong>{money(projection.annualExtra)}</strong></div> : null}</header>
-    <section className="dashboard-intro discovery-intro-full" aria-labelledby="discovery-guidance-title"><h3 id="discovery-guidance-title">Discovery Framework Impact Lift</h3><p>Build the estimate in four steps, from your sales baseline to a clearer view of the opportunity.</p></section>
-    <div className="discovery-page"><nav className="discovery-steps" aria-label="Discovery Framework steps">{steps.map((step, index) => <button key={step} type="button" className={activeStep === index ? 'active' : index < activeStep ? 'complete' : ''} aria-current={activeStep === index ? 'step' : undefined} onClick={() => goToStep(index as DiscoveryStep)}><span className="discovery-step-number">{index < activeStep ? <CheckIcon /> : index + 1}</span><span className="discovery-step-copy"><strong>{step}</strong><small>{stepDescriptions[index]}</small></span></button>)}</nav>
-      <div className={`discovery-grid ${activeStep === 0 ? 'discovery-grid-baseline' : activeStep === 1 || activeStep === 2 ? 'discovery-grid-scoring' : ''}`}><div>
-        {activeStep === 0 ? <DiscoveryBaselineForm baseline={baseline} onChange={setBaseline} showErrors={showBaselineErrors} /> : null}
+    <header className="module-header discovery-header"><h1>Discovery Framework</h1>{activeStep > 0 ? <div><strong>{money(projection.annualExtra)}</strong></div> : null}</header>
+    <nav className="discovery-steps" aria-label="Discovery Framework steps">{steps.map((step, index) => <button key={step} type="button" className={activeStep === index ? 'active' : index < activeStep ? 'complete' : ''} aria-current={activeStep === index ? 'step' : undefined} onClick={() => goToStep(index as DiscoveryStep)}><StepIcon step={index} /><span className="discovery-step-copy"><strong>{step}</strong><small>{stepDescriptions[index]}</small></span></button>)}</nav>
+    <div className={`discovery-page${activeStep <= 2 ? ' discovery-page-full' : ''}`}>
+      <div className={`discovery-grid ${activeStep <= 2 ? 'discovery-grid-baseline' : ''}`}><div>
+        {activeStep === 0 ? <DiscoveryBaselineFields baseline={baseline} onChange={setBaseline} /> : null}
         {isScoring ? <section className="discovery-score-stage discovery-question-stage">
           <div className="discovery-card discovery-score-heading-card"><div className="discovery-section-heading"><div><h2>{activeStep === 1 ? 'Rep Improvements' : 'Prospect Perspective'}</h2><p className="discovery-sub">{activeStep === 1 ? 'Rate how the rep shows up on the call.' : 'Rate how the prospect feels and decides.'}{baseline.mode === 'team' ? ' Use a representative score across your team.' : ''}</p></div></div></div>
           <div className="discovery-question-toolbar">
@@ -232,28 +240,13 @@ export function DiscoveryImpactPage() {
           </div>
 
           <div className="discovery-review-score-summaries"><ImprovementSummary areas={repAreas} side="rep" /><ImprovementSummary areas={prospectAreas} side="prospect" /></div>
-          <DecisionConditions areas={prospectAreas} />
-          <ProspectMeaning />
-          <section className="discovery-decision-context"><h3>Decision Baseline</h3><dl><div><dt>No-Decision / Follow-Up Rate</dt><dd>{baseline.noDecisionRate === '' ? 'Not entered' : `${baseline.noDecisionRate}%`}</dd></div><div><dt>Average Sales Cycle</dt><dd>{baseline.salesCycle === '' ? 'Not entered' : `${baseline.salesCycle} ${baseline.salesCycleUnit}`}</dd></div></dl><p>Use these starting points to discuss follow-up quality and decision speed, then compare them with actual results after implementation.</p></section>
-
-          <section className="discovery-talking-points" aria-labelledby="talking-points-title">
-            <div><h3 id="talking-points-title">Presentation talking points</h3><p>Use these statements to explain the business case.</p></div>
-            <ul>
-              <li><strong>Improve conversion before adding volume.</strong><span>The model creates the upside from the existing {Math.round(projection.annualPresentations).toLocaleString('en-US')} annual presentations.</span></li>
-              <li><strong>Translate behavior into a measurable outcome.</strong><span>An average score lift of {projection.averageLift.toFixed(1)} points supports a {closeRateLift.toFixed(1)}-point improvement in projected close rate.</span></li>
-              <li><strong>Focus the coaching conversation.</strong><span>{reviewAreas[0]?.name ?? 'The highest-scoring opportunity'} is currently one of the strongest modeled opportunities for improvement.</span></li>
-            </ul>
-          </section>
-
-          <footer className="discovery-review-assumptions"><strong>Model assumptions</strong><span>{Math.round(projection.annualPresentations).toLocaleString('en-US')} presentations/year</span><span>{money(offerValue)} average value</span><span>{sensitivity}% impact sensitivity</span><span>{conservative}% conservative factor</span><small>Projection only. Actual results depend on execution, market conditions, and sales-cycle quality.</small></footer>
         </section> : null}
-        {!isScoring ? <div className="discovery-step-actions"><button type="button" className="discovery-secondary" disabled={activeStep === 0} onClick={() => goToStep((activeStep - 1) as DiscoveryStep)}>Back</button>{activeStep < 3 ? <button type="button" className="discovery-primary" onClick={() => goToStep((activeStep + 1) as DiscoveryStep)}>Continue</button> : null}</div> : null}
-      </div>{activeStep > 0 ? <aside className="discovery-results">
+        {!isScoring ? <div className="discovery-step-actions">{activeStep > 0 ? <button type="button" className="discovery-secondary" onClick={() => goToStep((activeStep - 1) as DiscoveryStep)}>Back</button> : null}{activeStep < 3 ? <button type="button" className="discovery-primary" onClick={() => goToStep((activeStep + 1) as DiscoveryStep)}>Continue</button> : null}</div> : null}
+      </div>{activeStep === 3 ? <aside className="discovery-results">
         {activeStep === 3 ? <section className="discovery-card"><div className="discovery-section-heading"><div><h2>Live Impact</h2><p className="discovery-sub">Updates as you score each area.</p></div></div><div className="discovery-live-result"><strong>{money(projection.annualExtra)}</strong><span>Additional revenue per year</span></div><div className="discovery-live-metrics"><div><strong>{closeRate}%</strong><span>Current close rate</span></div><div><strong>{(projection.afterRate * 100).toFixed(1)}%</strong><span>After framework</span></div></div></section> : null}
-        {activeStep === 2 ? <section className="discovery-card discovery-prospect-results"><DecisionConditions areas={prospectAreas} /><ProspectMeaning /></section> : null}
-        <section className="discovery-card discovery-outcomes"><section><h2>Conversion Impact</h2><p>Potential improvement in close rate based on the average score lift.</p><div className="discovery-outcome-pair"><div><strong>{closeRate.toFixed(1)}%</strong><span>Current close rate</span></div><span aria-hidden="true">→</span><div><strong>{(projection.afterRate * 100).toFixed(1)}%</strong><span>Projected close rate</span></div></div><p className="discovery-outcome-lift">+{closeRateLift.toFixed(1)} percentage points</p></section><section><h2>Opportunity Impact</h2><p>More conversations turning into clients{baseline.mode === 'team' ? ` across ${projection.repCount} reps` : ''}.</p><div className="discovery-outcome-pair"><div><strong>{projection.currentWins.toFixed(1)}</strong><span>Clients/year · Current</span></div><span aria-hidden="true">→</span><div><strong>{projection.projectedWins.toFixed(1)}</strong><span>Clients/year · Projected</span></div></div><div className="discovery-additional-clients"><strong>+{projection.additionalWins.toFixed(1)}</strong><span>Additional Clients Per Year</span></div></section></section>
-        {activeStep === 3 ? <section className="discovery-card"><div className="discovery-section-heading"><div><h2>Projection Controls</h2><p className="discovery-sub">Adjust the estimate without changing ROI inputs.</p></div></div><label className="discovery-lever">Impact sensitivity <strong>{sensitivity}%</strong><input type="range" min="5" max="40" value={sensitivity} style={rangeStyle(sensitivity, 5, 40)} onChange={(event) => setSensitivity(Number(event.target.value))} /></label><label className="discovery-lever">Conservative factor <strong>{conservative}%</strong><input type="range" min="25" max="100" step="5" value={conservative} style={rangeStyle(conservative, 25, 100)} onChange={(event) => setConservative(Number(event.target.value))} /></label></section> : null}
-        <section className="discovery-card discovery-result-card"><h2>Financial Impact Lift</h2><div className="discovery-result-hero"><strong>{money(projection.annualExtra)}</strong><span>Extra revenue per year</span></div><div className="discovery-financial-table"><table><thead><tr><th>Period</th><th>Now</th><th>After</th><th>Extra $</th></tr></thead><tbody>{periods.map(([label, multiplier]) => { const now = projection.annualPresentations * multiplier * projection.currentRate * offerValue; const after = projection.annualPresentations * multiplier * projection.afterRate * offerValue; return <tr key={label} className={label === 'Year' ? 'total' : undefined}><td>{label}</td><td>{money(now)}</td><td>{money(after)}</td><td>{money(after - now)}</td></tr> })}</tbody></table></div><section className="discovery-what-means"><h3>What This Means</h3><p>Based on your existing presentation volume and average offer value, the modeled conversion improvement could represent <strong>{projection.additionalWins.toFixed(1)} additional clients and {money(projection.annualExtra)} in annual revenue</strong>{baseline.mode === 'team' ? ` across your ${projection.repCount}-rep team` : ''}. No additional presentations are assumed.</p></section></section>
+        <section hidden className="discovery-card discovery-outcomes"><section><h2>Conversion Impact</h2><p>Potential improvement in close rate based on the average score lift.</p><div className="discovery-outcome-pair"><div><strong>{closeRate.toFixed(1)}%</strong><span>Current close rate</span></div><span aria-hidden="true">→</span><div><strong>{(projection.afterRate * 100).toFixed(1)}%</strong><span>Projected close rate</span></div></div><p className="discovery-outcome-lift">+{closeRateLift.toFixed(1)} percentage points</p></section><section><h2>Opportunity Impact</h2><p>More conversations turning into clients{baseline.mode === 'team' ? ` across ${projection.repCount} reps` : ''}.</p><div className="discovery-outcome-pair"><div><strong>{projection.currentWins.toFixed(1)}</strong><span>Clients/year · Current</span></div><span aria-hidden="true">→</span><div><strong>{projection.projectedWins.toFixed(1)}</strong><span>Clients/year · Projected</span></div></div><div className="discovery-additional-clients"><strong>+{projection.additionalWins.toFixed(1)}</strong><span>Additional Clients Per Year</span></div></section></section>
+        {activeStep === 3 ? <section hidden className="discovery-card"><div className="discovery-section-heading"><div><h2>Projection Controls</h2><p className="discovery-sub">Adjust the estimate without changing ROI inputs.</p></div></div><label className="discovery-lever">Impact sensitivity <strong>{sensitivity}%</strong><input type="range" min="5" max="40" value={sensitivity} style={rangeStyle(sensitivity, 5, 40)} onChange={(event) => setSensitivity(Number(event.target.value))} /></label><label className="discovery-lever">Conservative factor <strong>{conservative}%</strong><input type="range" min="25" max="100" step="5" value={conservative} style={rangeStyle(conservative, 25, 100)} onChange={(event) => setConservative(Number(event.target.value))} /></label></section> : null}
+        <section hidden className="discovery-card discovery-result-card"><h2>Financial Impact Lift</h2><div className="discovery-result-hero"><strong>{money(projection.annualExtra)}</strong><span>Extra revenue per year</span></div><div className="discovery-financial-table"><table><thead><tr><th>Period</th><th>Now</th><th>After</th><th>Extra $</th></tr></thead><tbody>{periods.map(([label, multiplier]) => { const now = projection.annualPresentations * multiplier * projection.currentRate * offerValue; const after = projection.annualPresentations * multiplier * projection.afterRate * offerValue; return <tr key={label} className={label === 'Year' ? 'total' : undefined}><td>{label}</td><td>{money(now)}</td><td>{money(after)}</td><td>{money(after - now)}</td></tr> })}</tbody></table></div><section className="discovery-what-means"><h3>What This Means</h3><p>Based on your existing presentation volume and average offer value, the modeled conversion improvement could represent <strong>{projection.additionalWins.toFixed(1)} additional clients and {money(projection.annualExtra)} in annual revenue</strong>{baseline.mode === 'team' ? ` across your ${projection.repCount}-rep team` : ''}. No additional presentations are assumed.</p></section></section>
       </aside> : null}</div>
     </div>
     {customAreaDraft ? <div className="discovery-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) closeCustomAreaModal() }}>
