@@ -155,10 +155,6 @@ main { min-width:0; padding-bottom:60px; }
 .discovery-score-head { position:relative; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:18px; margin-bottom:22px; }
 .discovery-score-head h3 { margin:0; color:#07142e; font-size:clamp(20px,2vw,29px); font-weight:700; line-height:1.2; }
 .discovery-score-head p { margin:7px 0 0; color:#52637a; font-size:14px; line-height:1.5; }
-.discovery-impact-type { display:inline-flex; align-items:center; gap:9px; min-height:38px; padding:7px 16px; border:1px solid #cfe3d5; border-radius:12px; background:#f3f9f5; color:#07142e; font-size:13px; white-space:nowrap; }
-.discovery-impact-type svg { width:20px; height:20px; fill:#078633; }
-.discovery-impact-type.prospect { border-color:#cae1e8; background:#f2f8fa; }
-.discovery-impact-type.prospect svg { fill:#078da8; }
 .discovery-score-comparison { display:grid; grid-template-columns:minmax(0,1fr) 90px minmax(0,1fr); align-items:stretch; gap:12px; }
 .discovery-score-side { display:flex; min-width:0; flex-direction:column; padding:20px 18px 18px; border:1px solid #cdcdd4; border-radius:11px; background:linear-gradient(145deg,#fff 55%,#cdcdd4); }
 .discovery-score-side.after { border-color:#b9ddc4; background:linear-gradient(145deg,#fff 55%,#f3faf5); }
@@ -168,8 +164,7 @@ main { min-width:0; padding-bottom:60px; }
 .discovery-score-value strong { color:#676a6c; font-size:clamp(44px,5vw,62px); font-weight:700; letter-spacing:-.04em; }
 .discovery-score-panel.after .discovery-score-value strong { color:#078633; }
 .discovery-score-value span { font-size:clamp(22px,2.5vw,30px); font-weight:600; }
-.discovery-score-panel .discovery-score-prompt { margin:4px 0 14px; color:#52637a; font-size:13px; line-height:1.35; }
-.discovery-score-options { display:grid; grid-template-columns:repeat(10,minmax(0,1fr)); gap:4px; }
+.discovery-score-options { margin-top:14px; display:grid; grid-template-columns:repeat(10,minmax(0,1fr)); gap:4px; }
 .discovery-score-options button { position:relative; display:grid; place-items:center; min-width:0; height:39px; padding:0; border:1px solid #d5dde4; border-radius:5px; background:#fff; color:#07142e; font-size:13px; cursor:pointer; transition:transform .14s ease,border-color .14s ease,background .14s ease,color .14s ease,box-shadow .14s ease; }
 .discovery-score-options button:hover { z-index:1; border-color:#cdcdd4; transform:translateY(-1px); }
 .discovery-score-panel.after .discovery-score-options button:hover { border-color:#078633; }
@@ -492,7 +487,6 @@ main { min-width:0; padding-bottom:60px; }
   .discovery-steps button { flex:1 0 145px; }
   .discovery-score-row { padding:20px 16px; }
   .discovery-score-head { grid-template-columns:1fr; }
-  .discovery-impact-type { justify-self:start; }
   .discovery-score-comparison { grid-template-columns:1fr; gap:18px; }
   .discovery-lift { min-height:104px; }
   .discovery-lift::before { top:38px; left:8%; right:8%; }

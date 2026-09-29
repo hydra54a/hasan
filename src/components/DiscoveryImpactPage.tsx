@@ -38,10 +38,6 @@ function StepIcon({ step }: { step: number }) {
   return <svg className="discovery-step-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">{paths[step]}</svg>
 }
 
-function PersonIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4" /><path d="M4.5 21c0-4.2 3.1-7 7.5-7s7.5 2.8 7.5 7" /></svg>
-}
-
 function scoreSummary(area: Area, score: number, improved: boolean) {
   if (area.id === 1) {
     if (improved) return score >= 6 ? 'Stronger, clearer, and more compelling—your message drives understanding and action.' : 'Your message is becoming clearer and easier for the prospect to understand.'
@@ -61,9 +57,8 @@ function scoreSummary(area: Area, score: number, improved: boolean) {
 
 function ScoreSelector({ label, value, tone, onChange }: { label: string; value: number; tone: 'current' | 'after'; onChange: (value: number) => void }) {
   return <section className={`discovery-score-panel ${tone}`} aria-label={`${label} rating`}>
-    <div className="discovery-score-panel-label">{label}</div>
+    <div className="discovery-score-panel-label">{tone === 'current' ? 'Current Rating' : label}</div>
     <div className="discovery-score-value"><strong>{value}</strong><span>/ 10</span></div>
-    <p className="discovery-score-prompt">Select your {tone === 'current' ? 'current' : 'expected'} rating</p>
     <div className="discovery-score-options" role="group" aria-label={`${label}: ${value} out of 10`}>
       {scoreOptions.map((score) => <button key={score} type="button" className={score === value ? 'selected' : ''} aria-pressed={score === value} aria-label={`Set ${label.toLowerCase()} rating to ${score}`} onClick={() => onChange(score)}>{score}{score === value ? <span className="discovery-score-check"><CheckIcon /></span> : null}</button>)}
     </div>
@@ -75,7 +70,6 @@ function ScoreRow({ area, onChange, onRemove }: { area: Area; onChange: (key: 'n
   return <article className="discovery-score-row">
     <header className="discovery-score-head">
       <div><h3 tabIndex={-1}>{area.name}</h3><p>{area.quote}</p></div>
-      <div className={`discovery-impact-type ${area.side}`}><PersonIcon />{area.side === 'rep' ? 'Sales Rep Impact' : 'Prospect Impact'}</div>
       {area.removable ? <button type="button" className="discovery-remove" onClick={onRemove} aria-label={`Remove ${area.name}`}>Remove</button> : null}
     </header>
     <div className="discovery-score-comparison">
